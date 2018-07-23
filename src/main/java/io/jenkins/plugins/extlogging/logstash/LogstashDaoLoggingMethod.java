@@ -5,12 +5,12 @@ import hudson.model.TaskListener;
 import java.io.OutputStream;
 import java.util.List;
 
+import io.jenkins.plugins.extlogging.api.OutputStreamWrapper;
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingEventWriter;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingMethod;
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingOutputStream;
 import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchLogBrowser;
 import jenkins.model.logging.LogBrowser;
-import jenkins.model.logging.Loggable;
 import jenkins.plugins.logstash.LogstashConfiguration;
 import jenkins.plugins.logstash.persistence.ElasticSearchDao;
 import jenkins.plugins.logstash.persistence.LogstashIndexerDao;
@@ -48,19 +48,19 @@ public class LogstashDaoLoggingMethod extends ExternalLoggingMethod {
     }
 
     @Override
-    public ExternalLoggingEventWriter createWriter() {
+    public ExternalLoggingEventWriter _createWriter() {
         LogstashIndexerDao dao = LogstashConfiguration.getInstance().getIndexerInstance();
         return new RemoteLogstashWriter(getOwner(), TaskListener.NULL, prefix, dao);
     }
 
-    @Override
-    public OutputStream decorateLogger(OutputStream logger) {
+   // @Override
+    //public OutputStream decorateLogger(OutputStream logger) {
       //  LogstashWriter logstash = new LogstashWriter(run, TaskListener.NULL, logger, prefix);
       //  RemoteLogstashOutputStream los = new RemoteLogstashOutputStream(logstash, "prefix");
       //  return los.maskPasswords(SensitiveStringsProvider.getAllSensitiveStrings(run));
         // TODO: implement
-        return null;
-    }
+    //    return null;
+    //}
 
     private static class LogstashOutputStreamWrapper implements OutputStreamWrapper {
 
