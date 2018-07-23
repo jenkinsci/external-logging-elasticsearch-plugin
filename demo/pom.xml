@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>plugin</artifactId>
+    <version>3.15</version>
+    <relativePath />
+  </parent>
+
+  <groupId>io.jenkins.plugins.external-logging</groupId>
+  <artifactId>external-logging-demo</artifactId>
+  <name>External Logging for Elasticsearch/Logstash Demo</name>
+  <description>The plugin provides API to simplify external logging implementations for Jenkins</description>
+  <url>https://wiki.jenkins.io/display/JENKINS/External+Logging+API+Plugin</url>
+  <version>${revision}${changelist}</version>
+  <packaging>hpi</packaging>
+
+  <properties>
+    <revision>1.0-alpha-1</revision>
+    <changelist>-SNAPSHOT</changelist>
+    <jenkins.version>2.131-SNAPSHOT</jenkins.version>
+    <java.level>8</java.level>
+    <useBeta>true</useBeta>
+  </properties>
+  
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
+    <tag>${scmTag}</tag>
+  </scm>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.jenkins.plugins.external-logging</groupId>
+      <artifactId>external-logging-elasticsearch</artifactId>
+      <version>1.0-alpha-1-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.gmaven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
+        <version>1.5-jenkins-3</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.gmaven.runtime</groupId>
+            <artifactId>gmaven-runtime-1.8</artifactId>
+            <version>1.5-jenkins-3</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+</project>
