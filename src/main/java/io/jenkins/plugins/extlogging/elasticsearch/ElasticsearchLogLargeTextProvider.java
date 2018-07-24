@@ -1,36 +1,20 @@
 package io.jenkins.plugins.extlogging.elasticsearch;
 
-import com.jcraft.jzlib.GZIPInputStream;
-import com.trilead.ssh2.crypto.Base64;
 import hudson.console.AnnotatedLargeText;
-import hudson.console.ConsoleAnnotationOutputStream;
-import hudson.console.ConsoleAnnotator;
 import hudson.model.Run;
-import hudson.remoting.ObjectInputStreamEx;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.io.Writer;
-import static java.lang.Math.abs;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
 
 import io.jenkins.plugins.extlogging.api.util.UniqueIdHelper;
+import io.jenkins.plugins.extlogging.elasticsearch.util.JSONConsoleNotes;
 import io.jenkins.plugins.extlogging.elasticsearch.util.HttpGetWithData;
-import jenkins.model.Jenkins;
 import jenkins.plugins.logstash.LogstashConfiguration;
 import jenkins.plugins.logstash.persistence.ElasticSearchDao;
 import jenkins.plugins.logstash.persistence.LogstashIndexerDao;
-import jenkins.security.CryptoConfidentialKey;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -43,8 +27,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.Stapler;
-import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.framework.io.ByteBuffer;
 
 /**
@@ -64,8 +46,9 @@ public class ElasticsearchLogLargeTextProvider {
         this(run, null);
     }
 
-    public ElasticsearchLogLargeTextProvider(Run<?, ?> run, String stepId) {
+    public ElasticsearchLogLargeTextProvider(Run<?, ?> run, @CheckForNull String stepId) {
         this.run = run;
+        this.stepId = stepId;
     }
 
     private transient HttpClientBuilder clientBuilder;
@@ -102,6 +85,7 @@ public class ElasticsearchLogLargeTextProvider {
             buf = readLogToBuffer(0);
         } catch (IOException ex) {
             buf = new ByteBuffer();
+            //TODO: return new BrokenAnnotatedLargeText(ex);
         }
         return new UncompressedAnnotatedLargeText(buf, StandardCharsets.UTF_8, !run.isLogUpdated(), this);
     }
@@ -119,19 +103,28 @@ public class ElasticsearchLogLargeTextProvider {
         ElasticSearchDao esDao = (ElasticSearchDao)dao;
         
         ByteBuffer buffer = new ByteBuffer();
-        Collection<String> pulledLogs = pullLogs(esDao,0, Long.MAX_VALUE);
-        long ctr = 0;
-        for (String logEntry : pulledLogs) {
-            byte[] bytes = logEntry.getBytes();
-            
-            buffer.write(bytes, 0, bytes.length);
-            buffer.write('\n');
-            
-        }
+        Writer wr = new Writer() {
+            @Override
+            public void write(char[] cbuf, int off, int len) throws IOException {
+                byte[] bytes = new String(cbuf).getBytes("UTF-8");
+                buffer.write(bytes, off, len);
+            }
+
+            @Override
+            public void flush() throws IOException {
+                buffer.flush();
+            }
+
+            @Override
+            public void close() throws IOException {
+                buffer.close();
+            }
+        };
+        pullLogs(wr, esDao,0, Long.MAX_VALUE);
         return buffer;
     }
 
-    private Collection<String> pullLogs(ElasticSearchDao dao, long sinceMs, long toMs) throws IOException {
+    private void pullLogs(Writer writer, ElasticSearchDao dao, long sinceMs, long toMs) throws IOException {
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse response = null;
 
@@ -184,15 +177,12 @@ public class ElasticsearchLogLargeTextProvider {
 
             final JSONObject json = JSONObject.fromObject(content);
             JSONArray jsonArray = json.getJSONObject("hits").getJSONArray("hits");
-            ArrayList<String> res = new ArrayList<>(jsonArray.size());
             for (int i=0; i<jsonArray.size(); ++i) {
                 JSONObject hit = jsonArray.getJSONObject(i);
-                String timestamp = hit.getJSONObject("fields").getJSONArray("@timestamp").getString(0);
-                String message = hit.getJSONObject("fields").getJSONArray("message").getString(0);
-                res.add(timestamp + " > " +message);
+                JSONObject data = hit.getJSONObject("fields");
+                String timestamp = data.getJSONArray("@timestamp").getString(0);
+                JSONConsoleNotes.jsonToMessage(writer, data);
             }
-            Collections.sort(res);
-            return res;
 
         } finally {
             if (response != null) {
@@ -209,79 +199,5 @@ public class ElasticsearchLogLargeTextProvider {
             clientBuilder = HttpClientBuilder.create();
         }
         return clientBuilder;
-    }
-    
-    public static class UncompressedAnnotatedLargeText<T> extends AnnotatedLargeText<T> {
-
-        private T context;
-        private ByteBuffer memory;
-        
-        public UncompressedAnnotatedLargeText(ByteBuffer memory, Charset charset, boolean completed, T context) {
-            super(memory, charset, completed, context);
-            this.context = context;
-            this.memory = memory;
-        }
-         
-        @Override
-        public long writeHtmlTo(long start, Writer w) throws IOException {
-            ConsoleAnnotationOutputStream caw = new ConsoleAnnotationOutputStream(
-                    w, createAnnotator(Stapler.getCurrentRequest()), context, charset);
-            long r = super.writeLogTo(start, caw);
-            caw.flush();
-            long initial = memory.length();
-            /*
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Cipher sym = PASSING_ANNOTATOR.encrypt();
-            ObjectOutputStream oos = new ObjectOutputStream(new GZIPOutputStream(new CipherOutputStream(baos, sym)));
-            oos.writeLong(System.currentTimeMillis()); // send timestamp to prevent a replay attack
-            oos.writeObject(caw.getConsoleAnnotator());
-            oos.close();
-            StaplerResponse rsp = Stapler.getCurrentResponse();
-            if (rsp != null) {
-                rsp.setHeader("X-ConsoleAnnotator", new String(Base64.encode(baos.toByteArray())));
-            }
-            return r;
-            */
-            
-            /*
-            try {
-                memory.writeTo(caw);
-            } finally {
-                caw.flush();
-                caw.close();
-            }*/
-            return initial - memory.length(); 
-        }
-        
-        /**
-        * Used for sending the state of ConsoleAnnotator to the client, because we are deserializing this object later.
-        */
-        private static final CryptoConfidentialKey PASSING_ANNOTATOR = new CryptoConfidentialKey(AnnotatedLargeText.class,"consoleAnnotator");
-
-        
-        private ConsoleAnnotator createAnnotator(StaplerRequest req) throws IOException {
-        try {
-            String base64 = req!=null ? req.getHeader("X-ConsoleAnnotator") : null;
-            if (base64!=null) {
-                Cipher sym = PASSING_ANNOTATOR.decrypt();
-
-                ObjectInputStream ois = new ObjectInputStreamEx(new GZIPInputStream(
-                        new CipherInputStream(new ByteArrayInputStream(Base64.decode(base64.toCharArray())),sym)),
-                        Jenkins.getInstance().pluginManager.uberClassLoader);
-                try {
-                    long timestamp = ois.readLong();
-                    if (TimeUnit.HOURS.toMillis(1) > abs(System.currentTimeMillis()-timestamp))
-                        // don't deserialize something too old to prevent a replay attack
-                        return (ConsoleAnnotator)ois.readObject();
-                } finally {
-                    ois.close();
-                }
-            }
-        } catch (ClassNotFoundException e) {
-            throw new IOException(e);
-        }
-        // start from scratch
-        return ConsoleAnnotator.initial(context==null ? null : context.getClass());
-    }
     }
 }

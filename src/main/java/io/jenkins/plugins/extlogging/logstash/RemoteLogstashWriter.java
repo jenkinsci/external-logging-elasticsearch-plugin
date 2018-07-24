@@ -4,7 +4,8 @@ package io.jenkins.plugins.extlogging.logstash;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import io.jenkins.plugins.extlogging.api.Event;
-import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingEventWriter;
+import io.jenkins.plugins.extlogging.api.ExternalLoggingEventWriter;
+import io.jenkins.plugins.extlogging.elasticsearch.util.JSONConsoleNotes;
 import jenkins.model.Jenkins;
 import jenkins.plugins.logstash.persistence.BuildData;
 import jenkins.plugins.logstash.persistence.LogstashIndexerDao;
@@ -13,6 +14,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.annotation.CheckForNull;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -46,11 +48,12 @@ public class RemoteLogstashWriter extends ExternalLoggingEventWriter {
     @Override
     public void writeEvent(Event event) {
         JSONObject payload = dao.buildPayload(buildData, jenkinsUrl,
-                Collections.singletonList(event.getMessage()));
+                Collections.singletonList(""));
+        JSONConsoleNotes.parseToJSON(event.getMessage(), payload);
         // TODO: replace Dao implementation by an independent one
         JSONObject data = payload.getJSONObject("data");
-        for (Map.Entry<String, Object> entry : event.getData().entrySet()) {
-            Object value = entry.getValue();
+        for (Map.Entry<String, Serializable> entry : event.getData().entrySet()) {
+            Serializable value = entry.getValue();
             data.put(entry.getKey(), value != null ? value.toString() : null);
         }
 

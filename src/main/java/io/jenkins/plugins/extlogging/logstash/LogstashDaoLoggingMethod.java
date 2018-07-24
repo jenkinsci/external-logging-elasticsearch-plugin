@@ -5,8 +5,8 @@ import hudson.model.TaskListener;
 import java.io.OutputStream;
 import java.util.List;
 
+import io.jenkins.plugins.extlogging.api.ExternalLoggingEventWriter;
 import io.jenkins.plugins.extlogging.api.OutputStreamWrapper;
-import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingEventWriter;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingMethod;
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingOutputStream;
 import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchLogBrowser;
@@ -48,7 +48,7 @@ public class LogstashDaoLoggingMethod extends ExternalLoggingMethod {
     }
 
     @Override
-    public ExternalLoggingEventWriter _createWriter() {
+    protected ExternalLoggingEventWriter _createWriter() {
         LogstashIndexerDao dao = LogstashConfiguration.getInstance().getIndexerInstance();
         return new RemoteLogstashWriter(getOwner(), TaskListener.NULL, prefix, dao);
     }
