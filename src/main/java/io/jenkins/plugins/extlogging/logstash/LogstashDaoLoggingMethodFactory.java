@@ -5,7 +5,6 @@ import hudson.model.Run;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingMethod;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingMethodFactory;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingMethodFactoryDescriptor;
-import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchLogBrowser;
 import jenkins.model.logging.Loggable;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -41,7 +40,7 @@ public class LogstashDaoLoggingMethodFactory extends ExternalLoggingMethodFactor
     }
 
     @Extension
-    @Symbol("logstash")
+    @Symbol("elasticsearch")
     public static final class DescriptorImpl extends ExternalLoggingMethodFactoryDescriptor {
 
     }

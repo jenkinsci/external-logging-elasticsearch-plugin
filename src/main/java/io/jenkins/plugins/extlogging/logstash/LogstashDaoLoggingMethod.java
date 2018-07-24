@@ -1,7 +1,9 @@
 package io.jenkins.plugins.extlogging.logstash;
 
-import hudson.model.Run;
+import hudson.AbortException;
 import hudson.model.TaskListener;
+
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -9,17 +11,17 @@ import io.jenkins.plugins.extlogging.api.ExternalLoggingEventWriter;
 import io.jenkins.plugins.extlogging.api.OutputStreamWrapper;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingMethod;
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingOutputStream;
+import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchConfiguration;
+import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchGlobalConfiguration;
 import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchLogBrowser;
+import io.jenkins.plugins.extlogging.elasticsearch.util.ElasticSearchDao;
 import jenkins.model.logging.LogBrowser;
-import jenkins.plugins.logstash.LogstashConfiguration;
-import jenkins.plugins.logstash.persistence.ElasticSearchDao;
-import jenkins.plugins.logstash.persistence.LogstashIndexerDao;
+import jenkins.model.logging.Loggable;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 
 /**
- * Perform logging to {@link LogstashIndexerDao}.
+ * Perform logging to Elasticsearch.
  *
  * @author Oleg Nenashev
  */
@@ -28,29 +30,20 @@ public class LogstashDaoLoggingMethod extends ExternalLoggingMethod {
     @CheckForNull
     private final String prefix;
 
-    public LogstashDaoLoggingMethod(Run<?, ?> run, @CheckForNull String prefix) {
-        super(run);
+    public LogstashDaoLoggingMethod(Loggable loggable, @CheckForNull String prefix) {
+        super(loggable);
         this.prefix = prefix;
     }
 
     @Override
-    protected Run<?, ?> getOwner() {
-        return (Run<?, ?>)super.getOwner();
-    }
-
-    @Override
     public LogBrowser getDefaultLogBrowser() {
-        LogstashIndexerDao dao = LogstashConfiguration.getInstance().getIndexerInstance();
-        if (dao instanceof ElasticSearchDao) {
-            return new ElasticsearchLogBrowser(getOwner());
-        }
-        return null;
+        return new ElasticsearchLogBrowser(getOwner());
     }
 
     @Override
-    protected ExternalLoggingEventWriter _createWriter() {
-        LogstashIndexerDao dao = LogstashConfiguration.getInstance().getIndexerInstance();
-        return new RemoteLogstashWriter(getOwner(), TaskListener.NULL, prefix, dao);
+    protected ExternalLoggingEventWriter _createWriter() throws IOException {
+        ElasticSearchDao dao = ElasticsearchConfiguration.getOrFail().toDao();
+        return new RemoteLogstashWriter(prefix, dao);
     }
 
    // @Override

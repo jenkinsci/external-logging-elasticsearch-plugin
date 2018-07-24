@@ -1,25 +1,26 @@
-import jenkins.plugins.logstash.LogstashInstallation
-import jenkins.plugins.logstash.LogstashConfiguration
-import jenkins.plugins.logstash.persistence.LogstashIndexerDao;
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingGlobalConfiguration
 import io.jenkins.plugins.extlogging.logstash.LogstashDaoLoggingMethodFactory
 import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchLogBrowserFactory
+import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchGlobalConfiguration
+import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchConfiguration
+
 
 println("--- Configuring Logstash")
 String logstashPort = System.getProperty("elasticsearch.port");
+int port = logstashPort != null ? Integer.parseInt(logstashPort) : 9200;
 
-def descriptor = LogstashInstallation.logstashDescriptor
-descriptor.@type = LogstashIndexerDao.IndexerType.ELASTICSEARCH
-descriptor.@host = System.getProperty("elasticsearch.host", "http://elk")
-descriptor.@port = logstashPort != null ? Integer.parseInt(logstashPort) : 9200
-descriptor.@username = System.getProperty("elasticsearch.username")
-descriptor.@password = System.getProperty("elasticsearch.password")
-descriptor.@key = System.getProperty("logstash.key", "/logstash/logs")
+def config = ElasticsearchGlobalConfiguration.get();
 
-// TODO: Replace by proper initialization once plugin API is fixed
-// Currently setIndexer() method does not change active indexer.
-LogstashConfiguration.instance.@dataMigrated = false
-LogstashConfiguration.instance.migrateData()
+ElasticsearchConfiguration cfg = new ElasticsearchConfiguration(
+    System.getProperty("elasticsearch.uri", "http://elk:${port}")
+)
+
+config.elasticsearch = cfg;
+
+//TODO: support credentials
+//descriptor.@username = System.getProperty("elasticsearch.username")
+//descriptor.@password = System.getProperty("elasticsearch.password")
+config.key = System.getProperty("elasticsearch.key", "/logstash/logs")
 
 println("--- Configuring External Logging")
 ExternalLoggingGlobalConfiguration.instance.loggingMethod = new LogstashDaoLoggingMethodFactory()

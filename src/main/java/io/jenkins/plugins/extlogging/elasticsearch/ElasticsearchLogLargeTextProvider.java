@@ -6,15 +6,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import io.jenkins.plugins.extlogging.api.util.UniqueIdHelper;
+import io.jenkins.plugins.extlogging.elasticsearch.util.ElasticSearchDao;
 import io.jenkins.plugins.extlogging.elasticsearch.util.JSONConsoleNotes;
 import io.jenkins.plugins.extlogging.elasticsearch.util.HttpGetWithData;
-import jenkins.plugins.logstash.LogstashConfiguration;
-import jenkins.plugins.logstash.persistence.ElasticSearchDao;
-import jenkins.plugins.logstash.persistence.LogstashIndexerDao;
+import jenkins.model.logging.Loggable;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -37,17 +39,21 @@ import org.kohsuke.stapler.framework.io.ByteBuffer;
 public class ElasticsearchLogLargeTextProvider {
 
     @Nonnull
-    private Run run;
+    private ElasticSearchDao esDao;
+
+    @Nonnull
+    private Loggable loggable;
 
     @CheckForNull
     private String stepId;
 
-    public ElasticsearchLogLargeTextProvider(Run<?, ?> run) {
-        this(run, null);
+    public ElasticsearchLogLargeTextProvider(@Nonnull ElasticSearchDao dao, @Nonnull Loggable loggable) {
+        this(dao, loggable, null);
     }
 
-    public ElasticsearchLogLargeTextProvider(Run<?, ?> run, @CheckForNull String stepId) {
-        this.run = run;
+    public ElasticsearchLogLargeTextProvider(@Nonnull ElasticSearchDao dao, @Nonnull Loggable loggable, @CheckForNull String stepId) {
+        this.esDao = dao;
+        this.loggable = loggable;
         this.stepId = stepId;
     }
 
@@ -87,7 +93,7 @@ public class ElasticsearchLogLargeTextProvider {
             buf = new ByteBuffer();
             //TODO: return new BrokenAnnotatedLargeText(ex);
         }
-        return new UncompressedAnnotatedLargeText(buf, StandardCharsets.UTF_8, !run.isLogUpdated(), this);
+        return new UncompressedAnnotatedLargeText(buf, StandardCharsets.UTF_8, loggable.isLoggingFinished(), this);
     }
     
     /**
@@ -96,12 +102,6 @@ public class ElasticsearchLogLargeTextProvider {
      */
     @Nonnull 
     public ByteBuffer readLogToBuffer(long initialOffset) throws IOException {
-        LogstashIndexerDao dao = LogstashConfiguration.getInstance().getIndexerInstance();
-        if (!(dao instanceof ElasticSearchDao)) {
-            throw new IOException("Cannot brows logs, Elasticsearch Dao must be configured in the Logstash plugin");
-        }
-        ElasticSearchDao esDao = (ElasticSearchDao)dao;
-        
         ByteBuffer buffer = new ByteBuffer();
         Writer wr = new Writer() {
             @Override
@@ -124,12 +124,40 @@ public class ElasticsearchLogLargeTextProvider {
         return buffer;
     }
 
+    //TODO: Move to External Logging API
+    private Map<String, String> produceMatchers() {
+        Map<String, String> eqMatchers = new HashMap<>();
+        if (loggable instanceof Run<?, ?>) {
+            Run<?,?> run = (Run<?, ?>)loggable;
+            eqMatchers.put("jobId", UniqueIdHelper.getOrCreateId(run.getParent()));
+            eqMatchers.put("buildNum", Integer.toString(run.getNumber()));
+        }
+
+        if (stepId != null) {
+            eqMatchers.put("stepId", stepId);
+        }
+        return eqMatchers;
+    }
+
+    private String getMatchQuery() {
+        //TODO: Can be optimized a lot
+        //TODO: Proper escaping to avoid query injection
+        Map<String, String> matchers = produceMatchers();
+        ArrayList<String> conditions = new ArrayList<>(matchers.size());
+        for (Map.Entry<String, String> entry : matchers.entrySet()) {
+            String filter = String.format("{ \"match\": { \"data.%s\": \"%s\"}}",
+                    entry.getKey(), entry.getValue());
+            conditions.add(filter);
+        }
+        return StringUtils.join(conditions, ",");
+    }
+
     private void pullLogs(Writer writer, ElasticSearchDao dao, long sinceMs, long toMs) throws IOException {
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse response = null;
 
         // Determine job id
-        String jobId = UniqueIdHelper.getOrCreateId(run);
+
 
         // Prepare query
         String query = "{\n" +
@@ -137,13 +165,7 @@ public class ElasticsearchLogLargeTextProvider {
                 "  \"size\": 9999, \n" + // TODO use paging https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-from-size.html
                 "  \"query\": { \n" +
                 "    \"bool\": { \n" +
-                "      \"must\": [\n" +
-                "        { \"match\": { \"data.jobId\":   \"" + jobId + "\"}}, \n" +
-                (stepId != null ?
-                "        { \"match\": { \"data.stepId\": \"" + stepId + "\" }},  \n"
-                : "") +
-                "        { \"match\": { \"data.buildNum\": \"" + run.getNumber() + "\" }}  \n" +
-                "      ]\n" +
+                "      \"must\": [ " + getMatchQuery() + " ]\n" +
                 "    }\n" +
                 "  }\n" +
                 "}";
@@ -154,10 +176,8 @@ public class ElasticsearchLogLargeTextProvider {
         final StringEntity input = new StringEntity(query, ContentType.APPLICATION_JSON);
         getRequest.setEntity(input);
 
-        if (dao.getUsername() != null) {
-            //TODO: Make the logic public in the Logstash plugin
-            String auth = org.apache.commons.codec.binary.Base64.encodeBase64String(
-                    (dao.getUsername() + ":" + StringUtils.defaultString(dao.getPassword())).getBytes(StandardCharsets.UTF_8));
+        final String auth = dao.getAuth();
+        if (auth != null) {
             getRequest.addHeader("Authorization", "Basic " + auth);
         }
 

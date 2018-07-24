@@ -47,8 +47,13 @@
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>logstash</artifactId>
-      <version>2.1.1-SNAPSHOT</version>
+      <artifactId>apache-httpcomponents-client-4-api</artifactId>
+      <version>4.5.3-2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>credentials</artifactId>
+      <version>2.1.16</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>

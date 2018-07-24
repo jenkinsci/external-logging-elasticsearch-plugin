@@ -5,18 +5,17 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import io.jenkins.plugins.extlogging.api.Event;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingEventWriter;
+import io.jenkins.plugins.extlogging.elasticsearch.util.ElasticSearchDao;
 import io.jenkins.plugins.extlogging.elasticsearch.util.JSONConsoleNotes;
 import jenkins.model.Jenkins;
-import jenkins.plugins.logstash.persistence.BuildData;
-import jenkins.plugins.logstash.persistence.LogstashIndexerDao;
+
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,15 +27,13 @@ public class RemoteLogstashWriter extends ExternalLoggingEventWriter {
 
     @CheckForNull
     private final String prefix;
-    private final BuildData buildData;
-    private final String jenkinsUrl;
-    private final LogstashIndexerDao dao;
+    @Nonnull
+    private final ElasticSearchDao dao;
     private boolean connectionBroken;
 
-    public RemoteLogstashWriter(Run run, TaskListener listener, String prefix, LogstashIndexerDao dao) {
+    public RemoteLogstashWriter(@CheckForNull String prefix,
+                                @Nonnull ElasticSearchDao dao) {
         this.prefix = prefix;
-        this.jenkinsUrl = Jenkins.get().getRootUrl();
-        this.buildData = new BuildData(run, new Date(), listener);
         this.dao = dao;
     }
 
@@ -47,8 +44,7 @@ public class RemoteLogstashWriter extends ExternalLoggingEventWriter {
 
     @Override
     public void writeEvent(Event event) {
-        JSONObject payload = dao.buildPayload(buildData, jenkinsUrl,
-                Collections.singletonList(""));
+        JSONObject payload = new JSONObject();
         JSONConsoleNotes.parseToJSON(event.getMessage(), payload);
         // TODO: replace Dao implementation by an independent one
         JSONObject data = payload.getJSONObject("data");
@@ -71,7 +67,7 @@ public class RemoteLogstashWriter extends ExternalLoggingEventWriter {
      * @return True if errors have occurred during initialization or write.
      */
     public boolean isConnectionBroken() {
-        return connectionBroken || dao == null || buildData == null;
+        return connectionBroken || dao == null;
     }
 
     /**

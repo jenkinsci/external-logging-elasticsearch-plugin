@@ -1,6 +1,5 @@
 package io.jenkins.plugins.extlogging.elasticsearch;
 
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.TimeoutException;
@@ -12,9 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingGlobalConfiguration;
 import io.jenkins.plugins.extlogging.logstash.LogstashDaoLoggingMethodFactory;
-import jenkins.plugins.logstash.LogstashConfiguration;
-import jenkins.plugins.logstash.LogstashInstallation;
-import jenkins.plugins.logstash.persistence.LogstashIndexerDao;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -24,7 +20,6 @@ import org.jenkinsci.test.acceptance.docker.DockerContainer;
 import org.jenkinsci.test.acceptance.docker.DockerFixture;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 /**
@@ -48,19 +43,9 @@ public class ElasticsearchContainer extends DockerContainer {
 
     public void configureJenkins(JenkinsRule j) throws AssertionError {
         try {
-            LogstashInstallation.Descriptor descriptor = LogstashInstallation.getLogstashDescriptor();
-            setField(descriptor, "host", getURL().toString());
-            setField(descriptor, "port", 9200);
-            setField(descriptor, "key", "/logstash/logs");
-            setField(descriptor, "type", LogstashIndexerDao.IndexerType.ELASTICSEARCH);
-
-            // TODO: Replace by proper initialization once plugin API is fixed
-            // Currently setIndexer() method does not change active indexer.
-            LogstashConfiguration cfg = LogstashConfiguration.getInstance();
-            Field dataMigrated = cfg.getClass().getDeclaredField("dataMigrated");
-            dataMigrated.setAccessible(true);
-            dataMigrated.setBoolean(cfg, false);
-            LogstashConfiguration.getInstance().migrateData();
+            ElasticsearchGlobalConfiguration.get().setElasticsearch(
+                    new ElasticsearchConfiguration(getURL().toString())
+            );
         } catch (Exception ex) {
             throw new AssertionError("Failed to configure Logstash Plugin using reflection", ex);
         }
@@ -69,12 +54,6 @@ public class ElasticsearchContainer extends DockerContainer {
         cfg.setLogBrowser(new ElasticsearchLogBrowserFactory());
         cfg.setLoggingMethod(new LogstashDaoLoggingMethodFactory());
 
-    }
-
-    private final void setField(LogstashInstallation.Descriptor d, String field, Object value) throws NoSuchFieldException, IllegalAccessException {
-        Field dataMigrated = LogstashInstallation.Descriptor.class.getDeclaredField(field);
-        dataMigrated.setAccessible(true);
-        dataMigrated.set(d, value);
     }
 
     public void waitForInit(int timeoutMs) throws AssertionError, Exception {
