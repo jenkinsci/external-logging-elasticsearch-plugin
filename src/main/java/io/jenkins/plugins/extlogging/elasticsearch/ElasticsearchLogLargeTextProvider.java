@@ -153,13 +153,9 @@ public class ElasticsearchLogLargeTextProvider {
     }
 
     private void pullLogs(Writer writer, ElasticSearchDao dao, long sinceMs, long toMs) throws IOException {
-        CloseableHttpClient httpClient = null;
-        CloseableHttpResponse response = null;
-
-        // Determine job id
-
 
         // Prepare query
+        //TODO: stored_fields in ES5
         String query = "{\n" +
                 "  \"fields\": [\"message\",\"@timestamp\"], \n" +
                 "  \"size\": 9999, \n" + // TODO use paging https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-from-size.html
@@ -181,9 +177,8 @@ public class ElasticsearchLogLargeTextProvider {
             getRequest.addHeader("Authorization", "Basic " + auth);
         }
 
-        try {
-            httpClient = clientBuilder().build();
-            response = httpClient.execute(getRequest);
+        try(CloseableHttpClient httpClient = clientBuilder().build();
+            CloseableHttpResponse response = httpClient.execute(getRequest)) {
 
             if (response.getStatusLine().getStatusCode() != 200) {
                 throw new IOException(HttpGetWithData.getErrorMessage(dao.getUri(), response));
@@ -202,14 +197,6 @@ public class ElasticsearchLogLargeTextProvider {
                 JSONObject data = hit.getJSONObject("fields");
                 String timestamp = data.getJSONArray("@timestamp").getString(0);
                 JSONConsoleNotes.jsonToMessage(writer, data);
-            }
-
-        } finally {
-            if (response != null) {
-                response.close();
-            }
-            if (httpClient != null) {
-                httpClient.close();
             }
         }
     }

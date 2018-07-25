@@ -39,7 +39,7 @@ public class PipelineSmokeTest {
         // Eventual consistency
         //TODO(oleg_nenashev): Probably we need terminator entries in logs
         //to automate handling of such use-cases
-        Thread.sleep(1000);
+        Thread.sleep(10000);
         j.assertLogContains("Hello", build);
     }
 
@@ -47,9 +47,9 @@ public class PipelineSmokeTest {
     public void spotcheck_cycle() throws Exception {
         WorkflowJob project = j.createProject(WorkflowJob.class);
         project.setDefinition(new CpsFlowDefinition("" +
-                "for (int i = 0; i<10; i++) {" +
-                "  sleep 1" +
-                "  echo \"count: ${i}\"" +
+                "for (int i = 0; i<10; i++) {\n" +
+                "  sleep 1\n" +
+                "  echo \"count: ${i}\"\n" +
                 "}", true));
         Run build = j.buildAndAssertSuccess(project);
         // Eventual consistency
@@ -72,7 +72,7 @@ public class PipelineSmokeTest {
         //TODO(oleg_nenashev): Probably we need terminator entries in logs
         //to automate handling of such use-cases
         Thread.sleep(1000);
-        j.assertLogContains("Hello", build);
+        j.assertLogContains("whoami", build);
     }
 
 }

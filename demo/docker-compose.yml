@@ -2,6 +2,7 @@ version: '3'
 
 services:
   elk:
+  #TODO: update to ES 5.0
     image: sebp/elk:es241_l240_k461
     container_name: elk
     ports:
