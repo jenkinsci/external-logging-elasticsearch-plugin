@@ -76,7 +76,9 @@ public class JSONConsoleNotes {
     }
 
     public static void jsonToMessage(Writer w, JSONObject json) throws IOException {
-        String message = json.getString(MESSAGE_KEY);
+        //TODO: change for ES5
+        // String message = json.getString(MESSAGE_KEY);
+        String message = json.getJSONArray(MESSAGE_KEY).getString(0);
         JSONArray annotations = json.optJSONArray(ANNOTATIONS_KEY);
         if (annotations == null) {
             w.write(message);

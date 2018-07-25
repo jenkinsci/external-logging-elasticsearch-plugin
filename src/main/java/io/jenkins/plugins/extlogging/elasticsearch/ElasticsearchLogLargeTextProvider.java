@@ -195,6 +195,7 @@ public class ElasticsearchLogLargeTextProvider {
             for (int i=0; i<jsonArray.size(); ++i) {
                 JSONObject hit = jsonArray.getJSONObject(i);
                 JSONObject data = hit.getJSONObject("fields");
+                //TODO: Change for ES5
                 String timestamp = data.getJSONArray("@timestamp").getString(0);
                 JSONConsoleNotes.jsonToMessage(writer, data);
             }
