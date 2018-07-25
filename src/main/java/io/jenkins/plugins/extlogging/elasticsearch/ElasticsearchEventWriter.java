@@ -8,11 +8,13 @@ import io.jenkins.plugins.extlogging.elasticsearch.util.ElasticSearchDao;
 import io.jenkins.plugins.extlogging.elasticsearch.util.JSONConsoleNotes;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,6 +23,7 @@ public class ElasticsearchEventWriter extends ExternalLoggingEventWriter {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchEventWriter.class.getName());
+    private static final FastDateFormat MILLIS_FORMATTER = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
     @CheckForNull
     private final String prefix;
@@ -50,6 +53,10 @@ public class ElasticsearchEventWriter extends ExternalLoggingEventWriter {
             data.accumulate(entry.getKey(), value != null ? value.toString() : null);
         }
         payload.put("data", data);
+        //TODO: Use Event timestamp everywhere?
+        payload.put("@buildTimestamp", MILLIS_FORMATTER.format(event.getTimestamp()));
+        payload.put("@timestamp", MILLIS_FORMATTER.format(Calendar.getInstance().getTime()));
+        payload.put("@version", 1);
 
         try {
             dao.push(payload.toString());

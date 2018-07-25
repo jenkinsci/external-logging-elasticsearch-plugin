@@ -44,7 +44,7 @@ public class ElasticsearchContainer extends DockerContainer {
         try {
             ElasticsearchGlobalConfiguration es = ElasticsearchGlobalConfiguration.getInstance();
             es.setElasticsearch(new ElasticsearchConfiguration(getURL().toString()));
-            es.setKey("/test");
+            es.setKey("/logstash/logs");
         } catch (Exception ex) {
             throw new AssertionError("Failed to configure Logstash Plugin using reflection", ex);
         }
