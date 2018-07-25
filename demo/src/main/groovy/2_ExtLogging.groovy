@@ -1,5 +1,5 @@
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingGlobalConfiguration
-import io.jenkins.plugins.extlogging.logstash.LogstashDaoLoggingMethodFactory
+import io.jenkins.plugins.extlogging.elasticsearch.ElasicsearchLoggingMethodFactory
 import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchLogBrowserFactory
 import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchGlobalConfiguration
 import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchConfiguration
@@ -16,12 +16,12 @@ ElasticsearchConfiguration cfg = new ElasticsearchConfiguration(
 )
 
 config.elasticsearch = cfg;
+config.key = System.getProperty("elasticsearch.key", "/logstash/logs")
 
 //TODO: support credentials
 //descriptor.@username = System.getProperty("elasticsearch.username")
 //descriptor.@password = System.getProperty("elasticsearch.password")
-config.key = System.getProperty("elasticsearch.key", "/logstash/logs")
 
 println("--- Configuring External Logging")
-ExternalLoggingGlobalConfiguration.instance.loggingMethod = new LogstashDaoLoggingMethodFactory()
+ExternalLoggingGlobalConfiguration.instance.loggingMethod = new ElasicsearchLoggingMethodFactory()
 ExternalLoggingGlobalConfiguration.instance.logBrowser = new ElasticsearchLogBrowserFactory()

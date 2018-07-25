@@ -1,14 +1,11 @@
 
-package io.jenkins.plugins.extlogging.logstash;
+package io.jenkins.plugins.extlogging.elasticsearch;
 
-import hudson.model.Run;
-import hudson.model.TaskListener;
 import io.jenkins.plugins.extlogging.api.Event;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingEventWriter;
+
 import io.jenkins.plugins.extlogging.elasticsearch.util.ElasticSearchDao;
 import io.jenkins.plugins.extlogging.elasticsearch.util.JSONConsoleNotes;
-import jenkins.model.Jenkins;
-
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
@@ -20,10 +17,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class RemoteLogstashWriter extends ExternalLoggingEventWriter {
+public class ElasticsearchEventWriter extends ExternalLoggingEventWriter {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(RemoteLogstashWriter.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchEventWriter.class.getName());
 
     @CheckForNull
     private final String prefix;
@@ -31,8 +28,8 @@ public class RemoteLogstashWriter extends ExternalLoggingEventWriter {
     private final ElasticSearchDao dao;
     private boolean connectionBroken;
 
-    public RemoteLogstashWriter(@CheckForNull String prefix,
-                                @Nonnull ElasticSearchDao dao) {
+    public ElasticsearchEventWriter(@CheckForNull String prefix,
+                                    @Nonnull ElasticSearchDao dao) {
         this.prefix = prefix;
         this.dao = dao;
     }
@@ -47,11 +44,12 @@ public class RemoteLogstashWriter extends ExternalLoggingEventWriter {
         JSONObject payload = new JSONObject();
         JSONConsoleNotes.parseToJSON(event.getMessage(), payload);
         // TODO: replace Dao implementation by an independent one
-        JSONObject data = payload.getJSONObject("data");
+        JSONObject data = new JSONObject();
         for (Map.Entry<String, Serializable> entry : event.getData().entrySet()) {
             Serializable value = entry.getValue();
-            data.put(entry.getKey(), value != null ? value.toString() : null);
+            data.accumulate(entry.getKey(), value != null ? value.toString() : null);
         }
+        payload.put("data", data);
 
         try {
             dao.push(payload.toString());

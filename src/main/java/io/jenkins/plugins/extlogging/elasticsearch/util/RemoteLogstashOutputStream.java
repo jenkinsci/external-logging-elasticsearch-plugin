@@ -21,11 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.jenkins.plugins.extlogging.logstash;
+package io.jenkins.plugins.extlogging.elasticsearch.util;
 
 import hudson.console.ConsoleNote;
 import hudson.console.LineTransformationOutputStream;
 import io.jenkins.plugins.extlogging.api.util.MaskSecretsOutputStream;
+import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchEventWriter;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,12 +36,12 @@ import java.util.logging.Logger;
 
 public class RemoteLogstashOutputStream extends LineTransformationOutputStream {
 
-    final RemoteLogstashWriter logstash;
+    final ElasticsearchEventWriter logstash;
     final String prefix;
 
     private static final Logger LOGGER = Logger.getLogger(RemoteLogstashOutputStream.class.getName());
 
-    public RemoteLogstashOutputStream(RemoteLogstashWriter logstash, String prefix) {
+    public RemoteLogstashOutputStream(ElasticsearchEventWriter logstash, String prefix) {
         super();
         this.logstash = logstash;
         this.prefix = prefix;

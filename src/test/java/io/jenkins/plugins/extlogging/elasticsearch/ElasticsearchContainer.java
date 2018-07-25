@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingGlobalConfiguration;
-import io.jenkins.plugins.extlogging.logstash.LogstashDaoLoggingMethodFactory;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -43,16 +42,16 @@ public class ElasticsearchContainer extends DockerContainer {
 
     public void configureJenkins(JenkinsRule j) throws AssertionError {
         try {
-            ElasticsearchGlobalConfiguration.get().setElasticsearch(
-                    new ElasticsearchConfiguration(getURL().toString())
-            );
+            ElasticsearchGlobalConfiguration es = ElasticsearchGlobalConfiguration.getInstance();
+            es.setElasticsearch(new ElasticsearchConfiguration(getURL().toString()));
+            es.setKey("/test");
         } catch (Exception ex) {
             throw new AssertionError("Failed to configure Logstash Plugin using reflection", ex);
         }
 
         ExternalLoggingGlobalConfiguration cfg = ExternalLoggingGlobalConfiguration.getInstance();
         cfg.setLogBrowser(new ElasticsearchLogBrowserFactory());
-        cfg.setLoggingMethod(new LogstashDaoLoggingMethodFactory());
+        cfg.setLoggingMethod(new ElasicsearchLoggingMethodFactory());
 
     }
 

@@ -1,7 +1,5 @@
-package io.jenkins.plugins.extlogging.logstash;
+package io.jenkins.plugins.extlogging.elasticsearch;
 
-import hudson.AbortException;
-import hudson.model.TaskListener;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,9 +9,6 @@ import io.jenkins.plugins.extlogging.api.ExternalLoggingEventWriter;
 import io.jenkins.plugins.extlogging.api.OutputStreamWrapper;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingMethod;
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingOutputStream;
-import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchConfiguration;
-import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchGlobalConfiguration;
-import io.jenkins.plugins.extlogging.elasticsearch.ElasticsearchLogBrowser;
 import io.jenkins.plugins.extlogging.elasticsearch.util.ElasticSearchDao;
 import jenkins.model.logging.LogBrowser;
 import jenkins.model.logging.Loggable;
@@ -25,12 +20,12 @@ import javax.annotation.CheckForNull;
  *
  * @author Oleg Nenashev
  */
-public class LogstashDaoLoggingMethod extends ExternalLoggingMethod {
+public class ElasticsearchLoggingMethod extends ExternalLoggingMethod {
 
     @CheckForNull
     private final String prefix;
 
-    public LogstashDaoLoggingMethod(Loggable loggable, @CheckForNull String prefix) {
+    public ElasticsearchLoggingMethod(Loggable loggable, @CheckForNull String prefix) {
         super(loggable);
         this.prefix = prefix;
     }
@@ -42,8 +37,8 @@ public class LogstashDaoLoggingMethod extends ExternalLoggingMethod {
 
     @Override
     protected ExternalLoggingEventWriter _createWriter() throws IOException {
-        ElasticSearchDao dao = ElasticsearchConfiguration.getOrFail().toDao();
-        return new RemoteLogstashWriter(prefix, dao);
+        ElasticSearchDao dao = ElasticsearchGlobalConfiguration.getInstance().toDao();
+        return new ElasticsearchEventWriter(prefix, dao);
     }
 
    // @Override
@@ -57,10 +52,10 @@ public class LogstashDaoLoggingMethod extends ExternalLoggingMethod {
 
     private static class LogstashOutputStreamWrapper implements OutputStreamWrapper {
 
-        private final RemoteLogstashWriter wr;
+        private final ElasticsearchEventWriter wr;
         private final List<String> passwordStrings;
 
-        public LogstashOutputStreamWrapper(RemoteLogstashWriter wr, List<String> passwordStrings, String prefix) {
+        public LogstashOutputStreamWrapper(ElasticsearchEventWriter wr, List<String> passwordStrings, String prefix) {
             this.wr = wr;
             this.passwordStrings = passwordStrings;
         }

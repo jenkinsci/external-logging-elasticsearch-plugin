@@ -1,4 +1,4 @@
-package io.jenkins.plugins.extlogging.logstash;
+package io.jenkins.plugins.extlogging.elasticsearch;
 
 import hudson.Extension;
 import hudson.model.Run;
@@ -16,13 +16,13 @@ import javax.annotation.CheckForNull;
  * @author Oleg Nenashev
  * @since TODO
  */
-public class LogstashDaoLoggingMethodFactory extends ExternalLoggingMethodFactory {
+public class ElasicsearchLoggingMethodFactory extends ExternalLoggingMethodFactory {
 
     @CheckForNull
     private String prefix;
 
     @DataBoundConstructor
-    public LogstashDaoLoggingMethodFactory() {
+    public ElasicsearchLoggingMethodFactory() {
 
     }
 
@@ -34,7 +34,7 @@ public class LogstashDaoLoggingMethodFactory extends ExternalLoggingMethodFactor
     @Override
     public ExternalLoggingMethod create(Loggable loggable) {
         if (loggable instanceof Run<?, ?>) {
-            return new LogstashDaoLoggingMethod((Run<?, ?>) loggable, prefix);
+            return new ElasticsearchLoggingMethod((Run<?, ?>) loggable, prefix);
         }
         return null;
     }

@@ -24,7 +24,7 @@ public class ElasticsearchLogBrowser extends LogBrowser {
     public AnnotatedLargeText overallLog() {
         ElasticSearchDao dao;
         try {
-            dao = ElasticsearchConfiguration.getOrFail().toDao();
+            dao = ElasticsearchGlobalConfiguration.getInstance().toDao();
         } catch (Exception ex) {
             return new BrokenAnnotatedLargeText(ex);
         }
@@ -36,7 +36,7 @@ public class ElasticsearchLogBrowser extends LogBrowser {
     public AnnotatedLargeText stepLog(@CheckForNull String stepId, boolean b) {
         ElasticSearchDao dao;
         try {
-            dao = ElasticsearchConfiguration.getOrFail().toDao();
+            dao = ElasticsearchGlobalConfiguration.getInstance().toDao();
         } catch (Exception ex) {
             return new BrokenAnnotatedLargeText(ex);
         }
