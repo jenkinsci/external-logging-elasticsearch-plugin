@@ -1,0 +1,99 @@
+bundle:
+  groupId: "io.jenkins.tools.war-packager.demo"
+  artifactId: "jenkins-external-task-logging-elk-demo"
+  vendor: "Jenkins project"
+  title: "Jenkins External Task Logging demo for Elasticsearch"
+  description: "Jenkins External Task Logging demo for Elasticsearch, packaged as a single WAR file. It automatically configures logging on startup"
+buildSettings:
+  docker:
+    base: "jenkins/jenkins:2.130"
+    tag: "jenkins/demo-external-task-logging-elk"
+    build: true
+war:
+  groupId: "org.jenkins-ci.main"
+  artifactId: "jenkins-war"
+  source:
+    version: 2.131-SNAPSHOT
+plugins:
+  - groupId: "org.jenkins-ci.plugins"
+    artifactId: "structs"
+    source:
+      version: 1.14
+  - groupId: "org.jenkins-ci.plugins"
+    artifactId: "scm-api"
+    source:
+      version: 2.2.7
+  - groupId: "org.jenkins-ci.plugins.workflow"
+    artifactId: "workflow-aggregator"
+    source:
+      version: 2.5
+  - groupId: "org.jenkins-ci.plugins.workflow"
+    artifactId: "workflow-api"
+    source:
+      version: 2.29-rc219.239019e84015
+    build:
+      buildOriginalVersion: true
+  - groupId: "org.jenkins-ci.plugins.workflow"
+    artifactId: "workflow-step-api"
+    source:
+      version: 2.15
+  - groupId: "org.jenkins-ci.plugins.workflow"
+    artifactId: "workflow-support"
+    source:
+      version: 2.19-rc265.3e5e4aeecfff
+    build:
+      buildOriginalVersion: true
+  - groupId: "org.jenkins-ci.plugins.workflow"
+    artifactId: "workflow-job"
+    source:
+      version: 2.22-rc311.5616213fbed0
+    build:
+      buildOriginalVersion: true
+  - groupId: "org.jenkins-ci.plugins.workflow"
+    artifactId: "workflow-durable-task-step"
+    source:
+      version: 2.20-rc333.74dc7c303e6d
+    build:
+      buildOriginalVersion: true
+  - groupId: "org.jenkins-ci.plugins"
+    artifactId: "logstash"
+    source:
+      version: 2.1.1-SNAPSHOT
+  - groupId: "io.jenkins.plugins.external-logging"
+    artifactId: "external-logging-api"
+    source:
+      version: 1.0-alpha-1-SNAPSHOT
+  - groupId: "io.jenkins.plugins.external-logging"
+    artifactId: "external-logging-elasticsearch"
+    source:
+      version: 1.0-alpha-1-SNAPSHOT
+
+  # Security warnings
+  - groupId: "org.jenkins-ci.plugins"
+    artifactId: "junit"
+    source:
+      version: 1.24
+  - groupId: "org.jenkins-ci.plugins"
+    artifactId: "mailer"
+    source:
+      version: 1.21
+  - groupId: "org.jenkins-ci.plugins"
+    artifactId: "git-client"
+    source:
+      version: 2.7.2
+  - groupId: "org.jenkins-ci.plugins"
+    artifactId: "credentials-binding"
+    source:
+      version: 1.16
+  - groupId: "org.jenkins-ci.plugins"
+    artifactId: "docker-commons"
+    source:
+      version: 1.13
+systemProperties: {
+    jenkins.model.Jenkins.slaveAgentPort: "9000",
+    jenkins.model.Jenkins.slaveAgentPortEnforce: "true"}
+groovyHooks:
+  - type: "init"
+    id: "initScripts"
+    source:
+      dir: src/main/groovy
