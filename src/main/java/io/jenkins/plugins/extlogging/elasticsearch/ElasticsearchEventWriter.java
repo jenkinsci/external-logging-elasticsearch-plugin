@@ -14,6 +14,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.logging.Level;
@@ -32,7 +33,9 @@ public class ElasticsearchEventWriter extends ExternalLoggingEventWriter {
     private boolean connectionBroken;
 
     public ElasticsearchEventWriter(@CheckForNull String prefix,
-                                    @Nonnull ElasticSearchDao dao) {
+                                    @Nonnull ElasticSearchDao dao,
+                                    @Nonnull Charset charset) {
+        super(charset);
         this.prefix = prefix;
         this.dao = dao;
     }

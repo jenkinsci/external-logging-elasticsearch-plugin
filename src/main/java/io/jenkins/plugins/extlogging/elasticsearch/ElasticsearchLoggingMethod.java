@@ -5,12 +5,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
+import io.jenkins.plugins.extlogging.api.ExternalLogBrowser;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingEventWriter;
 import io.jenkins.plugins.extlogging.api.OutputStreamWrapper;
 import io.jenkins.plugins.extlogging.api.ExternalLoggingMethod;
 import io.jenkins.plugins.extlogging.api.impl.ExternalLoggingOutputStream;
 import io.jenkins.plugins.extlogging.elasticsearch.util.ElasticSearchDao;
-import jenkins.model.logging.LogBrowser;
 import jenkins.model.logging.Loggable;
 
 import javax.annotation.CheckForNull;
@@ -31,14 +31,14 @@ public class ElasticsearchLoggingMethod extends ExternalLoggingMethod {
     }
 
     @Override
-    public LogBrowser getDefaultLogBrowser() {
+    public ExternalLogBrowser getDefaultLogBrowser() {
         return new ElasticsearchLogBrowser(getOwner());
     }
 
     @Override
     protected ExternalLoggingEventWriter _createWriter() throws IOException {
         ElasticSearchDao dao = ElasticsearchGlobalConfiguration.getInstance().toDao();
-        return new ElasticsearchEventWriter(prefix, dao);
+        return new ElasticsearchEventWriter(prefix, dao, getOwner().getCharset());
     }
 
    // @Override
