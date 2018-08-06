@@ -56,9 +56,3 @@ if(Jenkins.instance.getItem("Pipeline_parallel") == null) {
     )
     project3.save()
 }
-
-{
-    def prj = Jenkins.instance.createProject(FreeStyleProject.class, "Freestyle_master")
-    prj.getB
-
-}
