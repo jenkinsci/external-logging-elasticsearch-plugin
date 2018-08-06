@@ -26,6 +26,7 @@
 package io.jenkins.plugins.extlogging.elasticsearch.util;
 
 import com.google.common.collect.Range;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -54,6 +55,8 @@ import static com.google.common.collect.Ranges.closedOpen;
  * @author Liam Newman
  * @author Oleg Nenashev
  */
+//TODO: fix before the release
+@SuppressFBWarnings(value = "SE_NO_SERIALVERSIONID", justification = "To be set before the release")
 public class ElasticSearchDao implements Serializable {
 
     private static final Range<Integer> SUCCESS_CODES = closedOpen(200,300);
