@@ -39,7 +39,7 @@ public class UncompressedAnnotatedLargeText<T> extends AnnotatedLargeText<T> {
     public long writeHtmlTo(long start, Writer w) throws IOException {
         ConsoleAnnotationOutputStream caw = new ConsoleAnnotationOutputStream(
                 w, createAnnotator(Stapler.getCurrentRequest()), context, charset);
-        long r = super.writeLogTo(start, caw);
+        super.writeLogTo(start, caw);
         caw.flush();
         long initial = memory.length();
         /*

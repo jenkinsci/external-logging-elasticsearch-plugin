@@ -20,7 +20,8 @@
   <properties>
     <revision>1.0-alpha-1</revision>
     <changelist>-SNAPSHOT</changelist>
-    <jenkins.version>2.131-SNAPSHOT</jenkins.version>
+    <jenkins-core.version>2.137-20180807.141417-2</jenkins-core.version>
+    <jenkins-war.version>2.137-20180807.141447-2</jenkins-war.version>
     <java.level>8</java.level>
     <useBeta>true</useBeta>
   </properties>
@@ -43,7 +44,7 @@
     <dependency>
       <groupId>io.jenkins.plugins.external-logging</groupId>
       <artifactId>external-logging-api</artifactId>
-      <version>1.0-alpha-1-SNAPSHOT</version>
+      <version>1.0-alpha-1-20180807.155933-3</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
@@ -117,6 +118,10 @@
     <repository>
       <id>repo.jenkins-ci.org</id>
       <url>https://repo.jenkins-ci.org/public/</url>
+    </repository>
+    <repository>
+      <id>incrementals</id>
+      <url>https://repo.jenkins-ci.org/incrementals/</url>
     </repository>
   </repositories>
   <pluginRepositories>

@@ -57,7 +57,7 @@ public class RemoteLogstashOutputStream extends LineTransformationOutputStream {
         try {
             this.flush();
             if (!logstash.isConnectionBroken()) {
-                String line = new String(b, 0, len).trim();
+                String line = new String(b, 0, len, logstash.getCharset()).trim();
                 line = ConsoleNote.removeNotes(line);
                 logstash.writeMessage(prefix + line);
             }

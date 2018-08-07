@@ -11,6 +11,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.*;
+
 /**
  * @author Oleg Nenashev
  * @since TODO
@@ -41,6 +44,7 @@ public class PipelineSmokeTest {
         //to automate handling of such use-cases
         Thread.sleep(10000);
         j.assertLogContains("Hello", build);
+        assertThat(build.getLog(), not(containsString("[[")));
     }
 
     @Test

@@ -1,4 +1,6 @@
 //TODO: Migrate to JCasC once it supports disabling via system property
+
+import hudson.model.FreeStyleProject
 import jenkins.model.Jenkins
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
@@ -11,8 +13,8 @@ if (!Boolean.getBoolean("io.jenkins.demo.external-task-logging-elk.enabled")) {
 println("-- Creating Jobs")
 //TODO: Classes do not work here, so some copy-paste for now
 
-if(Jenkins.instance.getItem("Demo_master") == null) {
-    WorkflowJob project1 = Jenkins.instance.createProject(WorkflowJob.class, "Demo_master")
+if(Jenkins.instance.getItem("Pipeline_master") == null) {
+    WorkflowJob project1 = Jenkins.instance.createProject(WorkflowJob.class, "Pipeline_master")
     project1.definition = new CpsFlowDefinition(
         "node('master') {\n" +
         "  sh \"ping -c 20 google.com\"\n" +
@@ -22,8 +24,8 @@ if(Jenkins.instance.getItem("Demo_master") == null) {
     project1.save()
 }
 
-if(Jenkins.instance.getItem("Demo_agent") == null) {
-    WorkflowJob project2 = Jenkins.instance.createProject(WorkflowJob.class, "Demo_agent")
+if(Jenkins.instance.getItem("Pipeline_agent") == null) {
+    WorkflowJob project2 = Jenkins.instance.createProject(WorkflowJob.class, "Pipeline_agent")
     project2.definition = new CpsFlowDefinition(
         "node('agent') {\n" +
         "  sh \"echo Hello, world!\"\n" +
@@ -35,8 +37,8 @@ if(Jenkins.instance.getItem("Demo_agent") == null) {
     project2.save()
 }
 
-if(Jenkins.instance.getItem("Demo_parallel") == null) {
-    WorkflowJob project3 = Jenkins.instance.createProject(WorkflowJob.class, "Demo_parallel")
+if(Jenkins.instance.getItem("Pipeline_parallel") == null) {
+    WorkflowJob project3 = Jenkins.instance.createProject(WorkflowJob.class, "Pipeline_parallel")
     project3.definition = new CpsFlowDefinition(
         "parallel local: {\n" +
         "  node('master') {\n" +
